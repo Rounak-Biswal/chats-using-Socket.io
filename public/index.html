@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat app</title>
+</head>
+
+<body>
+    <h1>welcome!! lets have a chat</h1>
+    <p id="error" style="color: red;"></p>
+
+    <input id="inputUsername" type="text" placeholder="Enter username">
+    <button id="joinBtn" onClick="addUser()">Join</button>
+
+    <!-- <button onClick="newSocket()">Create new connection</button><br> -->
+
+    <h3>Send msg to server</h3>
+    <input id="inputMsg" type="text" placeholder="Enter message">
+    <button id="sendBtn">Send</button>
+
+
+    <h3>msg from server</h3>
+    <ul id="server-msg"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket
+        let users = {}
+        let currUser
+
+        newSocket = () => {
+            if (socket)
+                socket.disconnect()
+            socket = io()
+
+            socket.on("connect", () => {
+                users[currUser] = socket.id
+                currUser = undefined
+                console.log('users:', users);
+            })
+
+            socket.on("server-msg", (msg) => {
+                console.log('msg from server:', msg);
+                updateServerMsg(msg)
+            })
+        }
+
+        const sendBtn = document.getElementById('sendBtn')
+        sendBtn.addEventListener('click', () => {
+            let msg = document.getElementById('inputMsg').value
+            document.getElementById('inputMsg').value = ""
+            console.log('msg entered:', msg);
+            try {
+                if (socket)
+                    socket.emit("client-msg", msg)      //msg sent with name "client-msg"
+                else
+                    throw new Error("socket doesnt exist")
+            } catch (e) {
+                document.getElementById('error').innerHTML = e
+                setTimeout(() => {
+                    document.getElementById('error').innerHTML = ""
+                }, 3000)
+            }
+        })
+
+        updateServerMsg = (msg) => {
+            let parentUl = document.getElementById('server-msg')
+            let childLi = document.createElement('li')
+            childLi.innerHTML = msg
+            parentUl.appendChild(childLi)
+        }
+
+        addUser = () => {
+            try {
+                let username = document.getElementById('inputUsername').value
+                if (username) {
+                    currUser = username
+                    newSocket()
+                } else {
+                    throw new Error("username is missing")
+                }
+            } catch (e) {
+                document.getElementById('error').innerHTML = e
+                setTimeout(() => {
+                    document.getElementById('error').innerHTML = ""
+                }, 3000)
+            } finally {
+                document.getElementById('inputUsername').value = ""
+            }
+        }
+    </script>
+</body>
+
+</html>
