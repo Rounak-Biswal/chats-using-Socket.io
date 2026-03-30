@@ -27,68 +27,80 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let socket
-        let users = {}
-        let currUser
+        let isJoined = false
 
         newSocket = () => {
-            if (socket)
-                socket.disconnect()
             socket = io()
 
-            socket.on("connect", () => {
-                users[currUser] = socket.id
-                currUser = undefined
-                console.log('users:', users);
+            socket.on("disconnect", () => {
+                isJoined = false;
             })
 
-            socket.on("server-msg", (msg) => {
-                console.log('msg from server:', msg);
-                updateServerMsg(msg)
+            socket.on("server-msg", (msgObj) => {
+                console.log('msg from server:', msgObj.msg);
+                updateServerMsg(msgObj)
+            })
+
+            socket.on("join-success", (msg) => {
+                displayMsg(msg)
+                isJoined = true
+                document.getElementById('joinBtn').disabled = true
+            })
+
+            socket.on("join-error", (msg) => {
+                displayMsg(msg)
             })
         }
+
+        newSocket()     //new connection on page reload
 
         const sendBtn = document.getElementById('sendBtn')
         sendBtn.addEventListener('click', () => {
             let msg = document.getElementById('inputMsg').value
+
+            if (!isJoined) {
+                displayMsg("join chat before sending message")
+                return
+            }
+
+            if (!msg) {
+                displayMsg("enter a message before sending")
+                return
+            }
+
             document.getElementById('inputMsg').value = ""
             console.log('msg entered:', msg);
-            try {
-                if (socket)
-                    socket.emit("client-msg", msg)      //msg sent with name "client-msg"
-                else
-                    throw new Error("socket doesnt exist")
-            } catch (e) {
-                document.getElementById('error').innerHTML = e
-                setTimeout(() => {
-                    document.getElementById('error').innerHTML = ""
-                }, 3000)
+
+            if (!socket) {
+                displayMsg("socket doesnt exist")
+                return
             }
+            socket.emit("client-msg", msg)      //msg sent with name "client-msg"
         })
 
-        updateServerMsg = (msg) => {
+        updateServerMsg = (msgObj) => {
             let parentUl = document.getElementById('server-msg')
             let childLi = document.createElement('li')
-            childLi.innerHTML = msg
+            childLi.innerHTML = `${msgObj.username} : ${msgObj.msg}`
             parentUl.appendChild(childLi)
         }
 
         addUser = () => {
-            try {
-                let username = document.getElementById('inputUsername').value
-                if (username) {
-                    currUser = username
-                    newSocket()
-                } else {
-                    throw new Error("username is missing")
-                }
-            } catch (e) {
-                document.getElementById('error').innerHTML = e
-                setTimeout(() => {
-                    document.getElementById('error').innerHTML = ""
-                }, 3000)
-            } finally {
-                document.getElementById('inputUsername').value = ""
+            let username = document.getElementById('inputUsername').value
+            if (username) {
+                socket.emit("join", username)
+            } else {
+                displayMsg("username is missing")
             }
+            document.getElementById('inputUsername').value = ""
+
+        }
+
+        displayMsg = (msg) => {
+            document.getElementById('error').innerHTML = msg
+            setTimeout(() => {
+                document.getElementById('error').innerHTML = ""
+            }, 3000)
         }
     </script>
 </body>
