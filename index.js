@@ -10,8 +10,8 @@ const io = new Server(server)
 
 app.use(express.static(path.join(__dirname, "public")))
 
-const userDB = {}
-const groupChats = {}
+const userToId = {}
+const idToUser = {}
 
 //sockets
 io.on("connection", (socket) => {
@@ -19,36 +19,35 @@ io.on("connection", (socket) => {
     console.log('id:', socket.id);
 
     socket.on("disconnect", (reason) => {
-        let currUser = userDB[socket.id]
-        currUser && delete userDB[currUser]
-        delete userDB[socket.id]
+        let currUser = idToUser[socket.id]
+        currUser && delete userToId[currUser]
+        delete idToUser[socket.id]
         currUser && console.log(`${currUser} disconnected`);
     })
 
     socket.on("client-msg", msg => {
         console.log('new message from client:', msg);
-        // groupChats[userDB[socket.id]] = msg
-        // console.log('group chats:', groupChats);
-        if (userDB[socket.id] && msg) {
+        if (idToUser[socket.id] && msg) {
             io.emit("server-msg", {
-                "username": userDB[socket.id],
+                "username": idToUser[socket.id],
                 "msg": msg
             })
         }
     })
 
     socket.on("join", username => {
-        if (socket.id in userDB) {
+        if (socket.id in idToUser) {
             socket.emit("join-error", "user already joined")
             return
         }
-        if (username in userDB) {
-            let oldSocketId = userDB[username]
-            delete userDB[oldSocketId]
+        if (username in userToId) {
+            socket.emit("join-error", "username already taken")
+            return
         }
-        userDB[username] = socket.id
-        userDB[socket.id] = username
-        console.log("users : ", userDB);
+        userToId[username] = socket.id
+        idToUser[socket.id] = username
+
+        console.log(userToId, "\n", idToUser)
 
         socket.emit("join-success", "user joined !!");
     })

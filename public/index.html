@@ -8,21 +8,34 @@
 </head>
 
 <body>
-    <h1>welcome!! lets have a chat</h1>
-    <p id="error" style="color: red;"></p>
+    <div class="header">
+        <h1>welcome!! lets have a chat</h1>
+        <p id="error" style="color: red;"></p>
 
-    <input id="inputUsername" type="text" placeholder="Enter username">
-    <button id="joinBtn" onClick="addUser()">Join</button>
+        <input id="inputUsername" type="text" placeholder="Enter username">
+        <button id="joinBtn" onClick="addUser()">Join</button>
+    </div>
+    <hr>
 
-    <!-- <button onClick="newSocket()">Create new connection</button><br> -->
+    <div style="display: flex;" class="personalMsg">
+        <div style="width: 50%;" class="onlineUsers">
+            <p style="text-align: center;">Online Users</p>
+        </div>
+        <div style="width: 50%;" class="chatArea">
+            <p style="text-align: center;">Username</p>
+        </div>
+    </div>
+    <hr>
 
-    <h3>Send msg to server</h3>
-    <input id="inputMsg" type="text" placeholder="Enter message">
-    <button id="sendBtn">Send</button>
+    <div class="groupMsg">
+        <h3>Send msg to server</h3>
+        <input id="inputMsg" type="text" placeholder="Enter message">
+        <button id="sendBtn">Send</button>
 
 
-    <h3>msg from server</h3>
-    <ul id="server-msg"></ul>
+        <h3>msg from server</h3>
+        <ul id="server-msg"></ul>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
