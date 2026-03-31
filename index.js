@@ -12,6 +12,15 @@ app.use(express.static(path.join(__dirname, "public")))
 
 const userToId = {}
 const idToUser = {}
+const removeUser = (socketId) => {
+    const currUser = idToUser[socketId]
+    if (!currUser) return
+
+    delete idToUser[socketId]
+    delete userToId[currUser]
+
+    io.emit("online-users", Object.values(idToUser))
+}
 
 //sockets
 io.on("connection", (socket) => {
@@ -19,10 +28,7 @@ io.on("connection", (socket) => {
     console.log('id:', socket.id);
 
     socket.on("disconnect", (reason) => {
-        let currUser = idToUser[socket.id]
-        currUser && delete userToId[currUser]
-        delete idToUser[socket.id]
-        currUser && console.log(`${currUser} disconnected`);
+        removeUser(socket.id)
     })
 
     socket.on("client-msg", msg => {
@@ -50,6 +56,12 @@ io.on("connection", (socket) => {
         console.log(userToId, "\n", idToUser)
 
         socket.emit("join-success", "user joined !!");
+
+        io.emit("online-users", Object.values(idToUser))
+    })
+
+    socket.on("leave", () => {
+        removeUser(socket.id)
     })
 })
 

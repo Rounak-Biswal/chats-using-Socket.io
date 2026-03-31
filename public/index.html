@@ -4,22 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .clickable {
+            cursor: pointer;
+        }
+    </style>
     <title>Chat app</title>
 </head>
 
 <body>
     <div class="header">
         <h1>welcome!! lets have a chat</h1>
-        <p id="error" style="color: red;"></p>
+        <p id="error" style="color: red; position: absolute;"></p>
 
         <input id="inputUsername" type="text" placeholder="Enter username">
         <button id="joinBtn" onClick="addUser()">Join</button>
+        <button id="leaveBtn" style="background-color: red; color: white; " onClick="removeUser()"
+            disabled>Leave</button>
     </div>
     <hr>
 
     <div style="display: flex;" class="personalMsg">
         <div style="width: 50%;" class="onlineUsers">
             <p style="text-align: center;">Online Users</p>
+            <ul id="online-users"></ul>
         </div>
         <div style="width: 50%;" class="chatArea">
             <p style="text-align: center;">Username</p>
@@ -41,12 +49,17 @@
     <script>
         let socket
         let isJoined = false
+        let currUser = undefined
+        let selectedUser = undefined
 
         newSocket = () => {
             socket = io()
 
             socket.on("disconnect", () => {
-                isJoined = false;
+                displayMsg("user disconnected")
+                isJoined = false
+                document.getElementById('joinBtn').disabled = false
+                document.getElementById('leaveBtn').disabled = true
             })
 
             socket.on("server-msg", (msgObj) => {
@@ -58,10 +71,24 @@
                 displayMsg(msg)
                 isJoined = true
                 document.getElementById('joinBtn').disabled = true
+                document.getElementById('leaveBtn').disabled = false
             })
 
             socket.on("join-error", (msg) => {
                 displayMsg(msg)
+            })
+
+            socket.on("online-users", (users) => {
+                const userList = document.getElementById('online-users')
+                userList.innerHTML = ""
+
+                for (let user of users) {
+                    let li = document.createElement('li')
+                    li.classList.add('clickable', 'online-user')
+                    li.addEventListener("click", updateSelectedUser)
+                    li.innerHTML = user
+                    userList.appendChild(li)
+                }
             })
         }
 
@@ -109,11 +136,25 @@
 
         }
 
+        removeUser = () => {
+            socket.emit("leave")
+            displayMsg("you left")
+            isJoined = false
+            document.getElementById('joinBtn').disabled = false
+            document.getElementById('leaveBtn').disabled = true
+            document.getElementById('online-users').innerHTML = ""
+        }
+
         displayMsg = (msg) => {
             document.getElementById('error').innerHTML = msg
             setTimeout(() => {
                 document.getElementById('error').innerHTML = ""
             }, 3000)
+        }
+    
+        updateSelectedUser = (event) => {
+            selectedUser = event.target.value
+            console.log("selectedUser : ",selectedUser);
         }
     </script>
 </body>
