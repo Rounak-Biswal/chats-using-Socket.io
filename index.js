@@ -63,6 +63,13 @@ io.on("connection", (socket) => {
     socket.on("leave", () => {
         removeUser(socket.id)
     })
+
+    socket.on("prsnMsgToServer", ({ msg, to }) => {
+        let idToSend = userToId[to]
+        // idToSend && socket.emit("prsnMsgFromServer", msg)
+        console.log('prsnMsgToServer: ', msg, "to: ", to, "from: ", idToUser[socket.id]);
+        io.to(idToSend).emit("prsnMsgFromServer", { "from": idToUser[socket.id], msg })
+    })
 })
 
 // app.get("/", (req,res)=>{

@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            background-color: black;
+            color: white;
+        }
+
         .clickable {
             cursor: pointer;
         }
@@ -28,9 +33,11 @@
         <div style="width: 50%;" class="onlineUsers">
             <p style="text-align: center;">Online Users</p>
             <ul id="online-users"></ul>
+            <input type="text" name="" id="inputPrsnMsg" placeholder="Enter message">
+            <button id="sendPrsnMsg" onClick="SendPrsnMsg()">Send</button>
         </div>
         <div style="width: 50%;" class="chatArea">
-            <p style="text-align: center;">Username</p>
+            <p style="text-align: center;" id="chatHeading">select user to chat with..</p>
         </div>
     </div>
     <hr>
@@ -49,7 +56,6 @@
     <script>
         let socket
         let isJoined = false
-        let currUser = undefined
         let selectedUser = undefined
 
         newSocket = () => {
@@ -58,8 +64,10 @@
             socket.on("disconnect", () => {
                 displayMsg("user disconnected")
                 isJoined = false
+                selectedUser = undefined
                 document.getElementById('joinBtn').disabled = false
                 document.getElementById('leaveBtn').disabled = true
+                document.getElementById('chatHeading').innerHTML = "select user to chat with.."
             })
 
             socket.on("server-msg", (msgObj) => {
@@ -89,6 +97,13 @@
                     li.innerHTML = user
                     userList.appendChild(li)
                 }
+            })
+
+            socket.on("prsnMsgFromServer", ({ from, msg }) => {
+                let pElement = document.createElement('p')
+                let parentEl = document.getElementById('chatHeading')
+                pElement.innerHTML = `${from}:${msg}`
+                parentEl.appendChild(pElement)
             })
         }
 
@@ -140,9 +155,11 @@
             socket.emit("leave")
             displayMsg("you left")
             isJoined = false
+            selectedUser = undefined
             document.getElementById('joinBtn').disabled = false
             document.getElementById('leaveBtn').disabled = true
             document.getElementById('online-users').innerHTML = ""
+            document.getElementById('chatHeading').innerHTML = `chat with ${selectedUser}`
         }
 
         displayMsg = (msg) => {
@@ -151,10 +168,16 @@
                 document.getElementById('error').innerHTML = ""
             }, 3000)
         }
-    
+
         updateSelectedUser = (event) => {
-            selectedUser = event.target.value
-            console.log("selectedUser : ",selectedUser);
+            selectedUser = event.target.innerHTML
+            console.log("selectedUser : ", selectedUser);
+            document.getElementById('chatHeading').innerHTML = `chat with ${selectedUser}`
+        }
+
+        SendPrsnMsg = () => {
+            let msg = document.getElementById('inputPrsnMsg').value
+            socket.emit("prsnMsgToServer", { msg, "to": selectedUser })
         }
     </script>
 </body>
