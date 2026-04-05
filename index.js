@@ -12,6 +12,10 @@ app.use(express.static(path.join(__dirname, "public")))
 
 const userToId = {}
 const idToUser = {}
+const rooms = {
+    '1234': [],
+    '5678': []
+}
 const removeUser = (socketId) => {
     const currUser = idToUser[socketId]
     if (!currUser) return
@@ -69,6 +73,25 @@ io.on("connection", (socket) => {
         // idToSend && socket.emit("prsnMsgFromServer", msg)
         console.log('prsnMsgToServer: ', msg, "to: ", to, "from: ", idToUser[socket.id]);
         io.to(idToSend).emit("prsnMsgFromServer", { "from": idToUser[socket.id], msg })
+    })
+
+    socket.on("joinRoom", ({ username, roomId }) => {
+        console.log('username:', username);
+        console.log('roomId:', roomId);
+        console.log(userToId[username]);
+        if (!username || !roomId) {
+            socket.emit("join-error", "invalid credentials")
+            return
+        }
+        if (!(roomId in rooms) || !userToId[username]) {
+            socket.emit("join-error", "either username or roomId doesn't exist")
+            return
+        }
+
+        rooms[`${roomId}`].push(userToId[username])
+        console.log('room:', rooms[`${roomId}`]);
+
+        socket.emit("join-success", "suceesully joined room")
     })
 })
 

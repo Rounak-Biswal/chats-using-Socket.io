@@ -25,7 +25,10 @@
         <input id="inputUsername" type="text" placeholder="Enter username">
         <button id="joinBtn" onClick="addUser()">Join</button>
         <button id="leaveBtn" style="background-color: red; color: white; " onClick="removeUser()"
-            disabled>Leave</button>
+            disabled>Leave</button><br><br>
+
+        <input id="inputroomId" type="text" placeholder="Enter room id">
+        <button id="joinRmBtn" onClick="joinRoom()">Join Room</button>
     </div>
     <hr>
 
@@ -50,6 +53,11 @@
 
         <h3>msg from server</h3>
         <ul id="server-msg"></ul>
+    </div>
+    <hr>
+
+    <div class="rooms">
+
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -147,7 +155,7 @@
             } else {
                 displayMsg("username is missing")
             }
-            document.getElementById('inputUsername').value = ""
+            // document.getElementById('inputUsername').value = ""
 
         }
 
@@ -178,6 +186,15 @@
         SendPrsnMsg = () => {
             let msg = document.getElementById('inputPrsnMsg').value
             socket.emit("prsnMsgToServer", { msg, "to": selectedUser })
+        }
+
+        joinRoom = () => {
+            let username = document.getElementById('inputUsername').value
+            let roomId = document.getElementById('inputroomId').value
+            socket.emit("joinRoom", { username, roomId })
+
+            document.getElementById('inputUsername').value = ""
+            document.getElementById('inputroomId').value = ""
         }
     </script>
 </body>
