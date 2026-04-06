@@ -13,9 +13,10 @@ app.use(express.static(path.join(__dirname, "public")))
 const userToId = {}
 const idToUser = {}
 const rooms = {
-    '1234': [],
-    '5678': []
+    '1234': new Set(),
+    '5678': new Set()
 }
+const idToRoom = {}
 const removeUser = (socketId) => {
     const currUser = idToUser[socketId]
     if (!currUser) return
@@ -33,6 +34,10 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", (reason) => {
         removeUser(socket.id)
+
+        let roomId = idToRoom[socket.id]
+        roomId && rooms[roomId].delete(socket.id)
+        delete idToRoom[socket.id]
     })
 
     socket.on("client-msg", msg => {
@@ -75,23 +80,34 @@ io.on("connection", (socket) => {
         io.to(idToSend).emit("prsnMsgFromServer", { "from": idToUser[socket.id], msg })
     })
 
-    socket.on("joinRoom", ({ username, roomId }) => {
-        console.log('username:', username);
-        console.log('roomId:', roomId);
-        console.log(userToId[username]);
-        if (!username || !roomId) {
+    socket.on("joinRoom", ({ roomId }) => {
+        let user = socket.id
+        if (!user || !roomId) {
             socket.emit("join-error", "invalid credentials")
             return
         }
-        if (!(roomId in rooms) || !userToId[username]) {
+        if (!(roomId in rooms) || !idToUser[user]) {
             socket.emit("join-error", "either username or roomId doesn't exist")
             return
         }
 
-        rooms[`${roomId}`].push(userToId[username])
-        console.log('room:', rooms[`${roomId}`]);
+        rooms[`${roomId}`].add(user)
+        idToRoom[socket.id] = roomId
+        console.log('rooms:', rooms, idToRoom);
 
         socket.emit("join-success", "suceesully joined room")
+    })
+
+    socket.on("leaveRoom", () => {
+        let roomId = idToRoom[socket.id]
+        if (!roomId) {
+            socket.emit("join-error", "user is not in any room")
+            return
+        }
+        rooms[roomId].delete(socket.id)
+        delete idToRoom[socket.id]
+        console.log("rooms : ", rooms, idToRoom);
+        socket.emit("join-success", "successfully left room")
     })
 })
 

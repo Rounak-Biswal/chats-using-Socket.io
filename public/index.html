@@ -29,6 +29,7 @@
 
         <input id="inputroomId" type="text" placeholder="Enter room id">
         <button id="joinRmBtn" onClick="joinRoom()">Join Room</button>
+        <button id="leaveRmBtn" onClick="leaveRoom()" style="background-color: red;">Leave Room</button>
     </div>
     <hr>
 
@@ -63,6 +64,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let socket
+        let roomId
         let isJoined = false
         let selectedUser = undefined
 
@@ -73,6 +75,7 @@
                 displayMsg("user disconnected")
                 isJoined = false
                 selectedUser = undefined
+                roomId = undefined
                 document.getElementById('joinBtn').disabled = false
                 document.getElementById('leaveBtn').disabled = true
                 document.getElementById('chatHeading').innerHTML = "select user to chat with.."
@@ -164,6 +167,7 @@
             displayMsg("you left")
             isJoined = false
             selectedUser = undefined
+            roomId = undefined
             document.getElementById('joinBtn').disabled = false
             document.getElementById('leaveBtn').disabled = true
             document.getElementById('online-users').innerHTML = ""
@@ -190,11 +194,19 @@
 
         joinRoom = () => {
             let username = document.getElementById('inputUsername').value
-            let roomId = document.getElementById('inputroomId').value
-            socket.emit("joinRoom", { username, roomId })
+            roomId = document.getElementById('inputroomId').value
+            socket.emit("joinRoom", { roomId })
 
             document.getElementById('inputUsername').value = ""
             document.getElementById('inputroomId').value = ""
+            document.getElementById('joinRmBtn').disabled = true
+        }
+
+        leaveRoom = () => {
+            // socket.emit("leaveRoom", { roomId })
+            socket.emit("leaveRoom")
+            document.getElementById('joinRmBtn').disabled = false
+            roomId = undefined
         }
     </script>
 </body>
